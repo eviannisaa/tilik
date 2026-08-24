@@ -1,0 +1,360 @@
+---
+import { Info } from "lucide-solid";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+/** Steps for the main flow, in the order someone actually does them. */
+const steps = [
+  {
+    title: "Pick a point",
+    copy: "Four ways in, all landing on the same latitude and longitude.",
+    detail: [
+      "Search a place: type an address, village or city and choose a result.",
+      "Coordinates: paste a value, or type it field by field.",
+      "Use my location: your browser's GPS, if you allow it.",
+      "Tap the map: anywhere; the pin drops where you touch.",
+    ],
+  },
+  {
+    title: "Check it",
+    copy: "Press Check this location. The report is built from several sources at once.",
+    detail: [
+      "Everything runs in parallel, so it takes as long as the slowest source.",
+      "BNPB's server is often the slow one. If it doesn't answer, the report still arrives, with that section marked.",
+    ],
+  },
+  {
+    title: "Read the result",
+    copy: "Six sections plus one overall verdict. Every number says where it came from.",
+    detail: [
+      "Numbers you can act on sit next to the confidence behind them.",
+      "Anything a source couldn't answer is labelled, never left blank and silent.",
+    ],
+  },
+];
+
+/** The coordinate notations, with a worked example of the same point. */
+const formats = [
+  { code: "DD", name: "Decimal degrees", example: "-6.91750, 107.61910", note: "Web maps, APIs. Typed signed: a minus means south or west." },
+  { code: "DDM", name: "Degrees, decimal minutes", example: "6° 55.0500' S · 107° 37.1460' E", note: "Handheld GPS units." },
+  { code: "DMS", name: "Degrees, minutes, seconds", example: `6° 55' 3.00" S · 107° 37' 8.76" E`, note: "Land certificates and legal documents." },
+];
+
+/** What each report section tells you, and how to read it. */
+const sections = [
+  {
+    title: "Terrain",
+    copy: "Elevation above sea level, and the kind of ground it implies: coastal, lowland, hilly, highland or mountainous.",
+    read: "Low ground near water is the combination that matters most for flooding.",
+  },
+  {
+    title: "Flood",
+    copy: "A risk level, and the basis it was decided on.",
+    read: "The basis is the important part: a mapped flood zone beats BNPB's national model, which beats our own estimate from elevation and distance to water.",
+  },
+  {
+    title: "Hazard index",
+    copy: "Eleven BNPB InaRISK layers, each scored 0 to 1: flood, flash flood, landslide, earthquake, liquefaction, tsunami, waves and erosion, volcanic eruption, extreme weather, drought and forest fire.",
+    read: "A blank row is not an all-clear. See the three states below.",
+  },
+  {
+    title: "Disaster history",
+    copy: "Recorded events near the point, with dates and distances.",
+    read: "The list names which catalogues were searched. Landslide records need a DIBI import, so their absence means nobody looked.",
+  },
+  {
+    title: "Local news",
+    copy: "Recent Indonesian reporting that names this area, sorted into the same hazard topics as the index above.",
+    read: "This is the weakest claim in the report: it matches on a place name, so a story may be about somewhere else in the same kota or kabupaten. Read it for what is being talked about, not as a record of what happened on the plot.",
+  },
+  {
+    title: "What's nearby",
+    copy: "Health, education, shops, transport, safety, services and places of worship within reach, from OpenStreetMap.",
+    read: "Thin coverage often means OpenStreetMap is incomplete there, not that the area is empty.",
+  },
+  {
+    title: "Area",
+    copy: "The administrative area the point falls in, its coordinates, and nearby geographic features.",
+    read: "Useful for checking you're looking at the plot you think you are.",
+  },
+];
+
+/** The three blank states in the hazard section, which look alike but aren't. */
+const hazardStates = [
+  {
+    label: "0.00 – 1.00",
+    meaning: "BNPB's hazard index at or near this point. 0.00 is a real value: modelled, and no hazard.",
+    tone: "olive",
+  },
+  {
+    label: "No hazard mapped",
+    meaning:
+      "The model covers Indonesia but maps nothing of this kind nearby, which is expected for tsunami well inland, or flood on a steep slope. Not a guarantee of safety.",
+    tone: "khaki",
+  },
+  {
+    label: "No answer",
+    meaning: "BNPB's server didn't respond for that layer. Run the check again to retry.",
+    tone: "clay",
+  },
+  {
+    label: "Outside coverage",
+    meaning:
+      "The point is beyond InaRISK's modelled area. BNPB maps Indonesia only. No index applies, which again is not the same as no hazard.",
+    tone: "clay",
+  },
+];
+
+const confidence = [
+  { level: "Measured data", meaning: "Read directly from a source, like an elevation lookup." },
+  { level: "Modelled data", meaning: "From a hazard model, such as InaRISK." },
+  { level: "Rough estimate", meaning: "Derived by us, from elevation and distance to water." },
+  { level: "No data", meaning: "Nothing usable was available for that field." },
+];
+
+
+const sources = [
+  { need: "Map", source: "MapLibre GL JS + OpenFreeMap", note: "No key required. Limited to Indonesia." },
+  { need: "Place search", source: "Nominatim / OpenStreetMap", note: "Also names a coordinate, and its kecamatan, kabupaten and province." },
+  { need: "Elevation", source: "OpenTopography, falling back to OpenTopoData", note: "SRTM, 30 m." },
+  { need: "Hazard indices", source: "BNPB InaRISK", note: "Eleven layers, Indonesia only, 100 m resolution." },
+  { need: "Earthquakes", source: "USGS", note: "Measured epicentres, with magnitude, depth and modelled shaking." },
+  {
+    need: "Tsunamis",
+    source: "NOAA / NCEI historical tsunami database",
+    note: "Observed runups: a measured place, and the height the water reached there.",
+  },
+  {
+    need: "Other disasters",
+    source: "BNPB DIBI, via the DesInventar archive",
+    note: "Flood, landslide, drought, windstorm, fire, eruption and coastal erosion. The only source here that counts casualties. Recorded per district, not per point, and the archive stops in 2019.",
+  },
+  { need: "Local news", source: "Google News RSS", note: "Indonesian edition, last 12 months." },
+  { need: "Nearby places", source: "Overpass / OpenStreetMap", note: "Within 1.5 km." },
+  { need: "Analysis", source: "PostGIS", note: "Holds the imported archive and the district boundaries." },
+];
+
+const toneClass: Record<string, string> = {
+  olive: "border-olive-200 bg-olive-50 text-olive-700",
+  khaki: "border-khaki-200 bg-khaki-50 text-khaki-700",
+  clay: "border-clay-200 bg-clay-50 text-clay-700",
+};
+---
+
+<BaseLayout
+  title="Guideline | Tilik"
+  description="How to use Tilik: picking a location, coordinate formats, reading the report, and what each data source can and cannot tell you."
+>
+  <div class="mx-auto w-full max-w-5xl px-4 pt-8 sm:px-6">
+    <header class="pb-8">
+      <div class="flex items-center gap-3">
+        <span class="h-0.5 w-9 rounded-full bg-clay-500"></span>
+        <p class="tilik-eyebrow text-olive-600">Guideline</p>
+      </div>
+      <h1 class="mt-3 font-display text-[2.1rem] leading-none text-olive-700 sm:text-[2.6rem]">
+        How to use Tilik
+      </h1>
+      <p class="mt-4 max-w-2xl text-[0.95rem] leading-relaxed text-ink-soft">
+        Tilik answers one question: what do open data sources say about this piece of
+        ground? This page covers how to ask, how to read the answer, and, just as
+        importantly, what the answer does not cover.
+      </p>
+    </header>
+
+    <section class="border-t border-line pt-8">
+      <h2 class="font-display text-[1.6rem] leading-tight text-ink">The flow</h2>
+      <ol class="mt-6 space-y-6">
+        {
+          steps.map((step, index) => (
+            <li class="border-t-2 border-olive-200 pt-4">
+              <p class="tilik-index text-clay-700">{String(index + 1).padStart(2, "0")}</p>
+              <h3 class="mt-2 text-sm font-medium tracking-tight text-ink">{step.title}</h3>
+              <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">{step.copy}</p>
+              <ul class="mt-2.5 space-y-1.5">
+                {step.detail.map((line) => (
+                  <li class="flex gap-2.5 text-sm leading-relaxed text-ink-soft">
+                    <span class="mt-2 size-1 shrink-0 rounded-full bg-clay-500"></span>
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="mt-14 border-t border-line pt-8">
+      <h2 class="font-display text-[1.6rem] leading-tight text-ink">Coordinate formats</h2>
+      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
+        Pick the notation before typing and the fields reshape to match. Switching
+        notation converts what you've already entered rather than clearing it, and the
+        result is always shown in all three, so the form doubles as a converter.
+      </p>
+
+      <div class="mt-6 overflow-x-auto">
+        <table class="w-full min-w-136 border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-line text-left">
+              <th class="py-2 pr-4 font-medium text-ink">Format</th>
+              <th class="py-2 pr-4 font-medium text-ink">Same point written as</th>
+              <th class="py-2 font-medium text-ink">Where you'll see it</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              formats.map((format) => (
+                <tr class="border-b border-line align-top">
+                  <td class="py-3 pr-4">
+                    <span class="font-medium text-ink">{format.code}</span>
+                    <span class="mt-0.5 block text-xs text-ink-faint">{format.name}</span>
+                  </td>
+                  <td class="tilik-figure py-3 pr-4 text-xs text-ink">{format.example}</td>
+                  <td class="py-3 text-xs leading-relaxed text-ink-soft">{format.note}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <p class="mt-4 max-w-2xl text-sm leading-relaxed text-ink-soft">
+        Pasting is forgiving. Signed decimals, hemisphere letters before or after the
+        number, and Indonesian markers all work. <span class="tilik-figure">6,9175° LS,
+        107,6191° BT</span> is read correctly, comma decimals included. A
+        longitude-first pair, as GeoJSON and WKT write it, is reordered with a note
+        rather than rejected.
+      </p>
+    </section>
+
+    <section class="mt-14 border-t border-line pt-8">
+      <h2 class="font-display text-[1.6rem] leading-tight text-ink">Reading the report</h2>
+      <div class="mt-6 grid gap-6 sm:grid-cols-2">
+        {
+          sections.map((section) => (
+            <article class="rounded-card border border-line bg-paper-raised p-4">
+              <h3 class="text-sm font-medium tracking-tight text-ink">{section.title}</h3>
+              <p class="mt-1.5 text-sm leading-relaxed text-ink-soft">{section.copy}</p>
+              <p class="mt-2.5 border-t border-line pt-2.5 text-xs leading-relaxed text-ink-faint">
+                {section.read}
+              </p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="mt-14 border-t border-line pt-8">
+      <h2 class="font-display text-[1.6rem] leading-tight text-ink">
+        When a hazard row looks empty
+      </h2>
+      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
+        Six of eleven layers reading blank is normal, not a failure. The section shows
+        four distinct states, and they mean very different things:
+      </p>
+
+      <ul class="mt-6 space-y-3">
+        {
+          hazardStates.map((state) => (
+            <li class="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+              <span
+                class:list={[
+                  "shrink-0 rounded-full border px-2.5 py-1 text-[0.7rem] font-medium",
+                  toneClass[state.tone],
+                ]}
+              >
+                {state.label}
+              </span>
+              <p class="text-sm leading-relaxed text-ink-soft">{state.meaning}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="mt-14 border-t border-line pt-8">
+      <h2 class="font-display text-[1.6rem] leading-tight text-ink">Confidence and sources</h2>
+      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
+        Every section carries a confidence label, and the report footer lists which
+        provider answered for each field. If a provider failed, the report says so
+        instead of quietly filling the gap.
+      </p>
+
+      <dl class="mt-6 grid gap-4 sm:grid-cols-2">
+        {
+          confidence.map((item) => (
+            <div class="border-t border-line pt-3">
+              <dt class="tilik-eyebrow font-medium capitalize">{item.level}</dt>
+              <dd class="mt-1.5 text-sm leading-relaxed text-ink-soft">{item.meaning}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <section class="mt-14 border-t border-line pt-8">
+      <h2 class="font-display text-[1.6rem] leading-tight text-ink">Where the data comes from</h2>
+      <div class="mt-6 overflow-x-auto">
+        <table class="w-full min-w-136 border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-line text-left">
+              <th class="py-2 pr-4 font-medium text-ink">Need</th>
+              <th class="py-2 pr-4 font-medium text-ink">Source</th>
+              <th class="py-2 font-medium text-ink">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              sources.map((row) => (
+                <tr class="border-b border-line align-top">
+                  <td class="py-2.5 pr-4 text-ink whitespace-nowrap w-[20%]">
+                    {row.need}
+                  </td>
+                  <td class="py-2.5 pr-4 text-ink-soft whitespace-nowrap w-[35%]">{row.source}</td>
+                  <td class="py-2.5 text-xs leading-relaxed text-ink-faint">{row.note}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-6 rounded-xl border border-khaki-200 bg-khaki-50 px-4 py-3.5 text-sm leading-relaxed text-khaki-700">
+        <p class="font-medium text-ink flex items-center gap-2"> <Info class="shrink-0 size-4" /> The disaster archive stops at the end of 2019.</p>
+        <p class="mt-1.5">
+          BNPB's DIBI records reach Tilik through the DesInventar archive, which holds
+          32,447 Indonesian events from 1815 to 2019 and then ends. So a flood, landslide,
+          drought or eruption from 2020 onwards will not appear, however severe it was, and
+          an empty disaster history is a statement about that archive rather than about the
+          land. Earthquakes and tsunamis are not affected: those come from USGS and NOAA,
+          which are read live.
+        </p>
+      </div>
+    </section>
+
+    <section class="mt-14 border-t border-line pt-8">
+      <h2 class="font-display text-[1.6rem] leading-tight text-ink">What Tilik can't tell you</h2>
+      <ul class="mt-5 space-y-3">
+        {
+          [
+            "Whether the land is legally yours to buy. Nothing here touches certificates, zoning or ownership. Check BPN and the local government.",
+            "Anything about this exact plot at survey precision. The hazard models are 100 m grids, so a reading describes the neighbourhood as much as the parcel.",
+            "Hazards outside Indonesia. InaRISK stops at the national border; a point beyond it reports 'outside coverage'.",
+            "A disaster history since 2020. The DesInventar archive that carries BNPB's DIBI records ends in 2019, and BNPB publishes no API to fill the gap. Earthquakes and tsunamis are read live and are current.",
+            "Whether it floods. It reports what the models say. Ask neighbours how the spot behaves in the wet season. That is still the best source there is.",
+          ].map((line) => (
+            <li class="flex gap-3">
+              <span class="mt-2 size-1 shrink-0 rounded-full bg-clay-500"></span>
+              <p class="text-sm leading-relaxed text-ink-soft">{line}</p>
+            </li>
+          ))
+        }
+      </ul>
+
+      <a
+        href="/explore"
+        class="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-olive-500 px-6 text-sm font-medium text-paper shadow-lift transition-colors hover:bg-olive-600"
+      >
+        Check a location
+      </a>
+    </section>
+  </div>
+</BaseLayout>

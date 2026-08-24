@@ -1,0 +1,364 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/outfit";
+@import "@fontsource-variable/urbanist";
+@import "@fontsource/instrument-serif/400.css";
+/* @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"); */
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Tilik design tokens — earth-inspired, paper-like, low chrome.
+   Colours are muted on purpose: the map should be the brightest thing on
+   screen, everything else is background.
+--------------------------------------------------------------------------- */
+@theme {
+     /* --font-sans:
+          "Inter Variable", ui-sans-serif, system-ui, -apple-system, sans-serif;
+     --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+     --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace; */
+
+     --font-sans: "Inter", sans-serif;
+     --font-display: "Outfit Variable", sans-serif;
+     --font-mono: "Urbanist", monospace;
+
+     /* ---------------------------------------------------------------------
+     Palette: #2a2f24  #4f5b2a  #a4a07a  #c96f4a  #f1eadc
+     Five colours, so every surface, border and state is derived from them
+     by mixing rather than introducing new hues. Each text/background pair
+     below was checked to WCAG AA (>=4.5:1); the derivations live in the
+     "Colour" section of the README.
+  --------------------------------------------------------------------- */
+
+     --color-paper: #f1eadc;
+     --color-paper-raised: #f9f6ef;
+     --color-paper-sunk: #e2dbc8;
+
+     --color-ink: #2a2f24;
+     --color-ink-soft: #4a4c3a;
+     --color-ink-faint: #60614a;
+
+     --color-line: #d7d1bb;
+     --color-line-strong: #a4a07a;
+
+     --color-olive-50: #dfdac8;
+     --color-olive-200: #bab99f;
+     --color-olive-500: #4f5b2a;
+     --color-olive-600: #454f28;
+     --color-olive-700: #3c4427;
+
+     --color-khaki-50: #e9e2d1;
+     --color-khaki-200: #d7d1bb;
+     --color-khaki-500: #a4a07a;
+     --color-khaki-600: #828062;
+     --color-khaki-700: #65654d;
+
+     --color-ink-raised: #363a2d;
+
+     --color-khaki-300: #b7b292;
+     --color-clay-300: #d28a6a;
+
+     --color-clay-50: #eddccc;
+     --color-clay-200: #e3c0aa;
+     --color-clay-400: #cf815f;
+     --color-clay-500: #c96f4a;
+     --color-clay-600: #9c5d3f;
+     --color-clay-700: #764e36;
+     --color-verdict-low: #c0bfa7;
+     --color-verdict-moderate: #d7d1bb;
+     --color-verdict-higher: #e3c0aa;
+     --color-verdict-unknown: #d2ccb5;
+     --color-status-low: #7a8768;
+     --color-status-moderate: #b39a62;
+     --color-status-higher: #81544a;
+     --color-band-low: color-mix(
+          in srgb,
+          var(--color-status-low) 25%,
+          var(--color-ink)
+     );
+     --color-band-moderate: color-mix(
+          in srgb,
+          var(--color-status-moderate) 18%,
+          var(--color-ink)
+     );
+     --color-band-higher: color-mix(
+          in srgb,
+          var(--color-status-higher) 40%,
+          var(--color-ink)
+     );
+
+     --radius-card: 1.125rem;
+     --shadow-lift:
+          0 1px 2px rgb(42 47 36 / 0.05), 0 10px 28px -14px rgb(42 47 36 / 0.22);
+     --shadow-inset-hairline: inset 0 1px 0 rgb(255 255 255 / 0.5);
+     --shadow-ambient:
+          0 2px 4px rgb(42 47 36 / 0.03), 0 12px 32px -12px rgb(42 47 36 / 0.14);
+     --ease-settle: cubic-bezier(0.32, 0.72, 0, 1);
+     --ease-quiet: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+     html {
+          scroll-behavior: smooth;
+          -webkit-text-size-adjust: 100%;
+     }
+
+     body {
+          background-color: var(--color-paper);
+          color: var(--color-ink);
+          font-family: var(--font-sans);
+          font-feature-settings:
+               "cv05" 1,
+               "ss03" 1;
+          -webkit-font-smoothing: antialiased;
+          text-rendering: optimizeLegibility;
+     }
+     .font-display {
+          letter-spacing: -0.015em;
+          font-feature-settings:
+               "liga" 1,
+               "dlig" 1;
+     }
+
+     body::before {
+          content: "";
+          position: fixed;
+          inset: 0;
+          z-index: -1;
+          pointer-events: none;
+          background-image: radial-gradient(
+               circle at 1px 1px,
+               rgb(42 47 36 / 0.055) 1px,
+               transparent 0
+          );
+          background-size: 22px 22px;
+          mask-image: radial-gradient(
+               ellipse 90% 55% at 50% 8%,
+               black,
+               transparent 78%
+          );
+     }
+     html {
+          scroll-padding-top: 6rem;
+     }
+
+     :focus-visible {
+          outline: 2px solid var(--color-olive-500);
+          outline-offset: 2px;
+          border-radius: 4px;
+     }
+
+     ::selection {
+          background: var(--color-olive-200);
+          color: var(--color-ink);
+     }
+}
+
+@layer components {
+     .tilik-figure {
+          font-family: var(--font-sans);
+          font-variant-numeric: tabular-nums;
+          letter-spacing: -0.01em;
+     }
+
+     .tilik-eyebrow {
+          font-size: 0.8rem;
+          font-weight: 500;
+          letter-spacing: 0.11em;
+          text-transform: uppercase;
+          color: var(--color-ink-faint);
+     }
+
+     .tilik-raised {
+          box-shadow: var(--shadow-inset-hairline);
+     }
+
+     .tilik-map-field {
+          background-color: var(--color-olive-500);
+          opacity: 0.05;
+          -webkit-mask-image: url("/map.svg");
+          mask-image: url("/map.svg");
+          -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+          -webkit-mask-position: center right;
+          mask-position: center right;
+          -webkit-mask-size: contain;
+          mask-size: contain;
+     }
+
+     .tilik-label {
+          font-size: 0.65rem;
+          font-weight: 500;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+     }
+
+     .tilik-rail {
+          scrollbar-width: none;
+     }
+
+     .tilik-rail::-webkit-scrollbar {
+          display: none;
+     }
+
+     .tilik-index {
+          font-family: var(--font-display);
+          font-size: 0.9375rem;
+          line-height: 1;
+          color: var(--color-line-strong);
+          font-variant-numeric: tabular-nums;
+     }
+}
+
+.maplibregl-ctrl-group {
+     background: var(--color-paper-raised) !important;
+     border: 1px solid var(--color-line) !important;
+     border-radius: 10px !important;
+     box-shadow: 0 4px 14px -8px rgb(42 47 36 / 0.4) !important;
+     overflow: hidden;
+}
+
+.maplibregl-ctrl-group button + button {
+     border-top: 1px solid var(--color-line) !important;
+}
+
+.maplibregl-ctrl-group button {
+     width: 32px !important;
+     height: 32px !important;
+}
+
+.maplibregl-ctrl-attrib {
+     background: rgb(249 246 239 / 0.85) !important;
+     font-size: 10px !important;
+     border-radius: 8px 0 0 0 !important;
+}
+
+.maplibregl-ctrl-attrib a {
+     color: var(--color-ink-soft) !important;
+}
+
+.maplibregl-canvas:focus {
+     outline: none;
+}
+
+@keyframes tilik-shimmer {
+     100% {
+          transform: translateX(100%);
+     }
+}
+
+@keyframes tilik-pin-drop {
+     0% {
+          transform: translateY(-10px) scale(0.85);
+          opacity: 0;
+     }
+     60% {
+          transform: translateY(1px) scale(1.02);
+          opacity: 1;
+     }
+     100% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+     }
+}
+
+@keyframes tilik-progress {
+     0% {
+          transform: translateX(-100%);
+     }
+     100% {
+          transform: translateX(420%);
+     }
+}
+
+@keyframes tilik-ping {
+     0% {
+          transform: scale(0.6);
+          opacity: 0.55;
+     }
+     100% {
+          transform: scale(2.4);
+          opacity: 0;
+     }
+}
+
+@media (prefers-reduced-motion: reduce) {
+     .tilik-progress-fill {
+          width: 100%;
+     }
+}
+
+@media (prefers-reduced-motion: reduce) {
+     *,
+     *::before,
+     *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+     }
+}
+
+.tilik-marker {
+     position: relative;
+     display: grid;
+     place-items: center;
+     width: 26px;
+     height: 34px;
+}
+
+.tilik-marker__pin {
+     position: relative;
+     width: 20px;
+     height: 20px;
+     border-radius: 50% 50% 50% 0;
+     transform: rotate(-45deg);
+     background: var(--color-red-600);
+     border: 2px solid var(--color-paper-raised);
+     box-shadow: 0 4px 12px -3px rgb(42 47 36 / 0.5);
+     animation: tilik-pin-drop 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tilik-marker__ping {
+     position: absolute;
+     bottom: 4px;
+     width: 14px;
+     height: 14px;
+     border-radius: 9999px;
+     background: var(--color-red-600);
+     animation: tilik-ping 1.9s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes tilik-rise {
+     from {
+          opacity: 0;
+          transform: translate3d(0, 12px, 0);
+     }
+     to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+     }
+}
+
+.tilik-rise {
+     animation: tilik-rise 600ms var(--ease-quiet) both;
+}
+
+@keyframes tilik-nudge {
+     from {
+          box-shadow: 0 0 0 0 rgb(79 91 42 / 0.45);
+     }
+     to {
+          box-shadow: 0 0 0 14px rgb(79 91 42 / 0);
+     }
+}
+
+.tilik-nudge {
+     animation: tilik-nudge 900ms var(--ease-settle) both;
+}
+
+.tilik-panel-glow {
+     background: radial-gradient(
+          ellipse 75% 130% at 18% 0%,
+          rgb(79 91 42 / 0.06),
+          transparent 70%
+     );
+}

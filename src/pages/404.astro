@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Logo from "../components/ui/Logo.astro";
+---
+
+<BaseLayout title="Tilik: page not found" bare>
+  <div class="mx-auto grid min-h-dvh w-full max-w-2xl place-items-center px-4 text-center">
+    <div>
+      <Logo class="mx-auto size-8 text-olive-600" />
+      <p class="tilik-eyebrow mt-6">404</p>
+      <h1 class="mt-2 font-display text-4xl tracking-tight text-olive-700">Off the map</h1>
+      <p class="mt-3 text-sm text-ink-soft">
+        There's nothing at this address. The ground you were looking for is back home.
+      </p>
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <a
+          href="/explore"
+          class="inline-flex h-10 items-center rounded-full bg-olive-500 px-5 text-sm font-medium text-paper transition-colors hover:bg-olive-600"
+        >
+          Check a location
+        </a>
+        <a
+          href="/guideline"
+          class="inline-flex h-10 items-center rounded-full border border-line bg-paper-raised px-4 text-sm text-ink transition-colors hover:border-line-strong"
+        >
+          Guideline
+        </a>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

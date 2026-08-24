@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# Local development only — Vercel provides its own ASGI server.
+uvicorn[standard]==0.52.3
+ruff==0.16.3
+pytest==9.1.1

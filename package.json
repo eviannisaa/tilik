@@ -1,0 +1,42 @@
+{
+  "name": "tilik",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Check the ground before you buy it — terrain, flood and disaster context for any location.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "astro": "astro",
+    "dev:api": "python -m uvicorn api.index:app --reload --port 8000",
+    "vercel-build": "astro build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@astrojs/solid-js": "^7.0.2",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/outfit": "^5.3.0",
+    "@fontsource-variable/urbanist": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.2",
+    "lucide-solid": "^1.31.0",
+    "maplibre-gl": "^6.4.0",
+    "solid-js": "^1.9.15",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@solidjs/testing-library": "^0.8.10",
+    "jsdom": "^29.1.1",
+    "typescript": "^6.0.3",
+    "vite-plugin-solid": "^2.11.14",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

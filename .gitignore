@@ -1,0 +1,22 @@
+# Build output
+dist/
+.astro/
+.vercel/
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Environment — never commit real secrets
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.log

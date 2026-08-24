@@ -1,0 +1,35 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import LocationChecker from "../components/LocationChecker";
+---
+
+<BaseLayout
+  title="Explore | Tilik"
+  description="Search a place or enter coordinates, then check terrain, flood risk, hazard indices, disaster history and what's nearby."
+>
+  <div class="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6 sm:pt-8">
+    <div class="flex flex-wrap items-end justify-between gap-4 pb-8">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="h-0.5 w-9 rounded-full bg-clay-500"></span>
+          <p class="tilik-eyebrow text-olive-600">Explore</p>
+        </div>
+        <h1 class="mt-3 font-display text-[1rem] leading-none text-olive-700 sm:text-[2.2rem]">
+          Check a location
+        </h1>
+      </div>
+
+      <p class="max-w-sm text-xs leading-relaxed text-ink-soft">
+        Pick a point any way you like, then press check. New to this?{" "}
+        <a
+          href="/guideline"
+          class="underline decoration-line-strong decoration-1 underline-offset-4 transition-colors hover:text-ink hover:decoration-olive-500"
+        >
+          Read the guideline
+        </a>.
+      </p>
+    </div>
+    
+  <LocationChecker client:load />
+  </div>
+</BaseLayout>

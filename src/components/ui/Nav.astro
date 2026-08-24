@@ -1,0 +1,68 @@
+---
+/**
+ * Shared header band. The active item is derived from the current path rather
+ * than passed in, so a page can't forget to declare it.
+ *
+ * `sticky`, not `fixed`: the band stays at the top either way, but a fixed
+ * header leaves the flow and the first screen of every page slides underneath
+ * it. Sticky keeps its 5rem of height in the layout, so nothing needs a
+ * matching offset that could drift out of sync with the header.
+ *
+ * The height is set explicitly because two other things measure against it —
+ * `scroll-padding-top` in global.css, and the sticky map column on Explore.
+ */
+const path = Astro.url.pathname.replace(/\/+$/, "") || "/";
+
+const items = [
+  { href: "/explore", label: "Explore" },
+  { href: "/guideline", label: "Guideline" },
+];
+
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+---
+
+<header class="sticky top-0 z-20 bg-paper">
+  <div
+    class="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6"
+  >
+    <a
+      href="/"
+      class="flex items-center gap-1 rounded-lg transition-opacity hover:opacity-80"
+      aria-label="Tilik, home"
+    >
+      <img
+        src="/tilik.svg"
+        alt=""
+        width="102"
+        height="48"
+        class="h-12 w-auto shrink-0"
+      />
+      <span class="font-display hidden text-[0.9rem] leading-none text-khaki-700 sm:inline">
+        land &amp; property check
+      </span>
+    </a>
+
+    <nav aria-label="Main">
+      <ul class="flex items-center gap-1">
+        {
+          items.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={isActive(item.href) ? "page" : undefined}
+                class:list={[
+                  "font-display block rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  isActive(item.href)
+                    ? "bg-olive-500 text-paper"
+                    : "text-ink-soft hover:bg-paper-sunk hover:text-ink",
+                ]}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>

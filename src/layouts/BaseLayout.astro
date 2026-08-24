@@ -1,0 +1,49 @@
+---
+import "../styles/global.css";
+import Nav from "../components/ui/Nav.astro";
+import SiteFooter from "../components/ui/SiteFooter.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+  bare?: boolean;
+}
+
+const {
+  title = "Tilik: check the ground before you buy it",
+  description = "Look up elevation, flood risk, disaster history and nearby waterways for any location. Informational only, never a substitute for a survey.",
+  bare = false,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f1eadc" />
+
+    <title>{title}</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+
+    <link rel="icon" type="image/svg+xml" href="/logo-T.png" />
+  </head>
+
+  <body class="flex min-h-dvh flex-col antialiased">
+    {bare ? <slot /> : (
+      <>
+        <Nav />
+        <main class="flex-1">
+          <slot />
+        </main>
+        <SiteFooter />
+      </>
+    )}
+  </body>
+</html>
