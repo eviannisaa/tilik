@@ -77,13 +77,13 @@ describe("the report index", () => {
     );
 
     expect(chips).toEqual(headings);
-    expect(chips).toHaveLength(7);
+    expect(chips).toHaveLength(8);
   });
 
   it("points every chip at a section that exists", async () => {
     const { container } = await renderReport();
 
-    for (let index = 1; index <= 7; index += 1) {
+    for (let index = 1; index <= 8; index += 1) {
       expect(container.querySelector(`#tilik-section-${index}`)).toBeTruthy();
     }
   });

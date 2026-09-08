@@ -63,6 +63,30 @@ export function relativeDays(iso: string | null | undefined): string | null {
 }
 
 /**
+ * Age of a reading that is only meaningful while it is fresh.
+ *
+ * `relativeDays` answers "is this still happening?" for a news story, and for
+ * that it is right. An air-quality index is an hour of one day: read through
+ * `relativeDays`, a measurement taken at 3am and one taken ten minutes ago both
+ * render as "today", under a heading that promises what the air is doing right
+ * now. Below a day this reports the hour instead, and above it hands back to
+ * `relativeDays`, because a stale reading's exact hour stops mattering.
+ */
+export function relativeHours(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60_000);
+  if (minutes < 0) return null;
+  if (minutes < 60) return "within the hour";
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  return relativeDays(iso);
+}
+
+/**
  * Modified Mercalli degree → its wording, as one consistent ladder.
  *
  * USGS's own words mix registers: "weak, light, moderate" leaves a reader

@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "./config";
 import type {
+  AirQualityResponse,
   ApiErrorBody,
   DisastersResponse,
   ElevationResponse,
@@ -129,6 +130,9 @@ export const api = {
 
   news: (lat: number, lng: number, options?: RequestOptions) =>
     request<NewsResponse>("/api/location/news", { lat, lng }, options),
+
+  airQuality: (lat: number, lng: number, options?: RequestOptions) =>
+    request<AirQualityResponse>("/api/location/air-quality", { lat, lng }, options),
 
   places: (lat: number, lng: number, options?: RequestOptions) =>
     request<PlacesResponse>("/api/location/places", { lat, lng }, options),

@@ -31,6 +31,11 @@ async def health() -> HealthResponse:
             "hazards": settings.inarisk_base_url,
             "earthquakes": settings.earthquake_api_url,
             "features": settings.overpass_api_url,
+            "airQuality": (
+                settings.waqi_api_url
+                if settings.waqi_api_token
+                else f"{settings.waqi_api_url} (WAQI token not set)"
+            ),
             "disasterFeed": settings.disaster_api_url or "not_configured",
             "externalApis": "enabled" if settings.enable_external_apis else "disabled",
         },

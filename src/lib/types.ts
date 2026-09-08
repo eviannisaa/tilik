@@ -270,6 +270,86 @@ export interface LocalNews {
   note: string | null;
 }
 
+/**
+ * US EPA air-quality bands, kept as the six the standard defines.
+ *
+ * Not collapsed into `RiskLevel`. These are a published scale a reader can go
+ * and check, and "unhealthy for sensitive groups" says something "medium"
+ * cannot: who exactly should be careful. `AirQuality.level` carries the
+ * three-way mapping separately, for the palette alone.
+ */
+export type AqiBand =
+  | "good"
+  | "moderate"
+  | "unhealthySensitive"
+  | "unhealthy"
+  | "veryUnhealthy"
+  | "hazardous"
+  | "unknown";
+
+export interface PollutantReading {
+  key: string;
+  label: string;
+  /** Already an AQI value, not a concentration. WAQI converts before publishing. */
+  aqi: number;
+  band: AqiBand;
+  /** The band's published name. Sent, not derived here. */
+  bandLabel: string;
+  level: RiskLevel;
+  /** True for the pollutant that set the overall figure. */
+  dominant: boolean;
+}
+
+export interface AirQualityAttribution {
+  name: string;
+  url: string | null;
+}
+
+/**
+ * What the nearest monitoring station is measuring.
+ *
+ * The one instrument reading in this report. Two things about it are unlike
+ * every other section, and both are why `stationDistanceMeters` is rendered
+ * rather than hidden: it is a station and not this point, and it is one hour
+ * and not a pattern.
+ */
+export interface AirQuality {
+  aqi: number | null;
+  band: AqiBand;
+  /** The band on the report's three-tone palette. Sent, not re-derived here. */
+  level: RiskLevel;
+  /** The band's published name, e.g. "Unhealthy for sensitive groups". */
+  bandLabel: string | null;
+  dominantPollutant: string | null;
+  dominantLabel: string | null;
+  pollutants: PollutantReading[];
+  /**
+   * How many pollutants the EPA index is built from, against which
+   * `pollutants` is what this station measures.
+   *
+   * BMKG's stations mostly report PM2.5 alone, so without this a one-row table
+   * reads as a complete reading. Five pollutants nobody measured is not five
+   * pollutants at zero.
+   */
+  pollutantsPossible: number;
+  stationName: string | null;
+  stationUrl: string | null;
+  /** WAQI never sends this; it is computed, and it sets `confidence`. */
+  stationDistanceMeters: number | null;
+  measuredAt: string | null;
+  /** Required by WAQI's terms. Render them. */
+  attributions: AirQualityAttribution[];
+  /**
+   * Four failures that mean four different things. `disabled` and
+   * `not_configured` are about this deployment; `no_station` and `unavailable`
+   * are about the world.
+   */
+  status: "ok" | "no_station" | "unavailable" | "not_configured" | "disabled";
+  confidence: ConfidenceLevel;
+  description: string;
+  note: string | null;
+}
+
 export interface AreaFeature {
   name: string;
   kind: string;
@@ -310,6 +390,7 @@ export interface LocationReport {
   hazards: HazardIndex;
   disasters: DisasterHistory;
   news: LocalNews;
+  airQuality: AirQuality;
   places: NearbyPlaces;
   area: AreaInfo;
   assessment: Assessment;
@@ -361,6 +442,12 @@ export interface ApiErrorBody {
     message: string;
     detail?: string | null;
   };
+}
+
+export interface AirQualityResponse {
+  latitude: number;
+  longitude: number;
+  airQuality: AirQuality;
 }
 
 export interface NewsResponse {

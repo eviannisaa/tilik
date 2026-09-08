@@ -67,6 +67,11 @@ const sections = [
     read: "This is the weakest claim in the report: it matches on a place name, so a story may be about somewhere else in the same kota or kabupaten. Read it for what is being talked about, not as a record of what happened on the plot.",
   },
   {
+    title: "Air quality",
+    copy: "The current air-quality index at the nearest monitoring station, the pollutant setting it, and a per-pollutant breakdown on the US EPA scale.",
+    read: "Two limits, both on the page: it was measured at a station whose distance is printed beside it, and it is one hour's reading rather than a season's. A clear afternoon says little about the months when the air here is worst.",
+  },
+  {
     title: "What's nearby",
     copy: "Health, education, shops, transport, safety, services and places of worship within reach, from OpenStreetMap.",
     read: "Thin coverage often means OpenStreetMap is incomplete there, not that the area is empty.",
@@ -129,6 +134,11 @@ const sources = [
     note: "Flood, landslide, drought, windstorm, fire, eruption and coastal erosion. The only source here that counts casualties. Recorded per district, not per point, and the archive stops in 2019.",
   },
   { need: "Local news", source: "Google News RSS", note: "Indonesian edition, last 12 months." },
+  {
+    need: "Air quality",
+    source: "WAQI / World Air Quality Index",
+    note: "BMKG's monitoring stations, 25 of them nationwide. The nearest reporting station, not the point itself, and a current reading rather than an average. How far that station is decides how much the figure is worth, and it is always printed: Jakarta and Semarang have one within 10 km, Bandung's nearest is 120 km away in Jakarta.",
+  },
   { need: "Nearby places", source: "Overpass / OpenStreetMap", note: "Within 1.5 km." },
   { need: "Analysis", source: "PostGIS", note: "Holds the imported archive and the district boundaries." },
 ];

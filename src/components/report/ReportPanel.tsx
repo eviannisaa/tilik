@@ -11,6 +11,7 @@ import Clock from "lucide-solid/icons/clock";
 import TriangleAlert from "lucide-solid/icons/triangle-alert";
 import { cn } from "../../lib/cn";
 import { locationStore } from "../../lib/store";
+import AirQualitySection from "./AirQualitySection";
 import AreaSection from "./AreaSection";
 import DisasterSection from "./DisasterSection";
 import FloodSection from "./FloodSection";
@@ -20,6 +21,7 @@ import PlacesSection from "./PlacesSection";
 import ReportHighlights from "./ReportHighlights";
 import { sectionId } from "./ReportSection";
 import ReportSkeleton from "./ReportSkeleton";
+import SectionBoundary from "./SectionBoundary";
 import TerrainSection from "./TerrainSection";
 import { formatDate } from "../../lib/format";
 import type {
@@ -97,8 +99,9 @@ const SECTIONS = [
      { index: 3, title: "Hazard index" },
      { index: 4, title: "Disaster history" },
      { index: 5, title: "Local news" },
-     { index: 6, title: "What's nearby" },
-     { index: 7, title: "Area" },
+     { index: 6, title: "Air quality" },
+     { index: 7, title: "What's nearby" },
+     { index: 8, title: "Area" },
 ] as const;
 
 /**
@@ -326,29 +329,80 @@ export default function ReportPanel() {
 
                                    {/* <ReportHighlights report={data()} /> */}
 
-                                   <TerrainSection
-                                        index={1}
-                                        terrain={data().terrain}
-                                   />
-                                   <FloodSection
-                                        index={2}
-                                        flood={data().flood}
-                                   />
-                                   <HazardSection
+                                   {/*
+                                     * Each section is fenced off from the
+                                     * others. See `SectionBoundary`: without
+                                     * it, one section throwing leaves the
+                                     * reader on the skeleton forever.
+                                     *
+                                     * The titles here must match `SECTIONS`
+                                     * above, which `report-index.test.tsx`
+                                     * checks, because a fallback renders the
+                                     * heading itself.
+                                     */}
+                                   <SectionBoundary index={1} title="Terrain">
+                                        <TerrainSection
+                                             index={1}
+                                             terrain={data().terrain}
+                                        />
+                                   </SectionBoundary>
+                                   <SectionBoundary index={2} title="Flood">
+                                        <FloodSection
+                                             index={2}
+                                             flood={data().flood}
+                                        />
+                                   </SectionBoundary>
+                                   <SectionBoundary
                                         index={3}
-                                        hazards={data().hazards}
-                                   />
-                                   <DisasterSection
+                                        title="Hazard index"
+                                   >
+                                        <HazardSection
+                                             index={3}
+                                             hazards={data().hazards}
+                                        />
+                                   </SectionBoundary>
+                                   <SectionBoundary
                                         index={4}
-                                        disasters={data().disasters}
-                                   />
-
-                                   <NewsSection index={5} news={data().news} />
-                                   <PlacesSection
+                                        title="Disaster history"
+                                   >
+                                        <DisasterSection
+                                             index={4}
+                                             disasters={data().disasters}
+                                        />
+                                   </SectionBoundary>
+                                   <SectionBoundary
+                                        index={5}
+                                        title="Local news"
+                                   >
+                                        <NewsSection
+                                             index={5}
+                                             news={data().news}
+                                        />
+                                   </SectionBoundary>
+                                   <SectionBoundary
                                         index={6}
-                                        places={data().places}
-                                   />
-                                   <AreaSection index={7} area={data().area} />
+                                        title="Air quality"
+                                   >
+                                        <AirQualitySection
+                                             index={6}
+                                             airQuality={data().airQuality}
+                                        />
+                                   </SectionBoundary>
+                                   <SectionBoundary
+                                        index={7}
+                                        title="What's nearby"
+                                   >
+                                        <PlacesSection
+                                             index={7}
+                                             places={data().places}
+                                        />
+                                   </SectionBoundary>
+                                   <SectionBoundary index={8} title="Area">
+                                        <AreaSection
+                                             index={8}
+                                             area={data().area}
+                                        />
+                                   </SectionBoundary>
 
                                    <footer
                                         class={cn(

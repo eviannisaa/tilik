@@ -2,6 +2,9 @@
 
 from api.schemas.common import DataSource, ErrorResponse
 from api.schemas.location import (
+    AirQuality,
+    AirQualityAttribution,
+    AirQualityResponse,
     AreaInfo,
     Coordinates,
     DisasterEvent,
@@ -18,6 +21,7 @@ from api.schemas.location import (
     NearbyPlaces,
     PlaceCategory,
     PlacesResponse,
+    PollutantReading,
     SearchResponse,
     SearchResult,
     TerrainInfo,
@@ -32,6 +36,9 @@ from api.schemas.report import (
 )
 
 __all__ = [
+    "AirQuality",
+    "AirQualityAttribution",
+    "AirQualityResponse",
     "AreaInfo",
     "Assessment",
     "AssessmentFactor",
@@ -54,6 +61,7 @@ __all__ = [
     "NearbyPlaces",
     "PlaceCategory",
     "PlacesResponse",
+    "PollutantReading",
     "ReportMeta",
     "SearchResponse",
     "SearchResult",
