@@ -21,6 +21,7 @@ const FIELD_LABEL: Record<string, string> = {
   hazards: "Hazard index",
   disasters: "Disaster history",
   news: "Local news",
+  airQuality: "Air quality",
   places: "What's nearby",
 };
 
@@ -34,6 +35,7 @@ const PROVIDER_LABEL: Record<string, string> = {
   postgis: "the local database",
   heuristic: "our own estimate",
   "google-news": "Google News",
+  waqi: "WAQI",
   unavailable: "The source",
 };
 

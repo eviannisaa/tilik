@@ -155,6 +155,49 @@ class Settings(BaseSettings):
     #: Turn off to drop the news section without disabling every other provider.
     enable_news: bool = True
 
+    # --- Air quality (WAQI) --------------------------------------------------
+    # The World Air Quality Index project: 11,000+ official monitoring stations
+    # worldwide, a geolocated feed that takes a coordinate directly, and a free
+    # token with a 1,000 requests/second quota. It is the only instrument data
+    # in this report; everything else is a model or a catalogue.
+    #
+    # Know what the Indonesian coverage actually is before relying on it. The
+    # network here is **25 stations**, every one of them BMKG's, and they are
+    # spread one per region rather than one per city. Measured against the map
+    # bounds this app allows: Jakarta, Semarang, Yogyakarta, Palembang, Medan,
+    # Makassar, Bekasi and Tangerang Selatan sit within 25 km of one. Surabaya
+    # is 79 km from the nearest, Balikpapan 90 km, Bandung 120 km and Denpasar
+    # 297 km. Bandung has no station of its own at all: a search for it returns
+    # nothing, and the nearest monitor is Kemayoran in Jakarta.
+    #
+    # DKI's own AQMS network and the US consulate monitors are *not* in this
+    # feed. Every Indonesian station checked attributes to BMKG alone, and the
+    # two Jakarta consulate entries that appear in search report no index.
+    #
+    # What the feed answers is the nearest *station*, not this point, and it
+    # never says how far that is. The distance is computed here, reported on
+    # every reading, and it sets the section's confidence.
+    #
+    # No reading is withheld for being far away. A distance-based cutoff was
+    # tried and removed: suppressing the figure meant most of the country got a
+    # blank section, and the operator's call is that a distant reading shown
+    # with its distance beats no reading at all. What the distance changes is
+    # the wording and the confidence, never whether the number appears.
+    waqi_api_url: str = "https://api.waqi.info/feed"
+    #: Free token from aqicn.org/data-platform/token. Server-side only: it must
+    #: never become a PUBLIC_* variable, which would compile it into the browser
+    #: bundle. Without one the section reports itself as not configured, which
+    #: costs the reader this section and nothing else.
+    waqi_api_token: str | None = None
+    #: Past this distance a station reading stops describing the checked point,
+    #: and the section's confidence drops to say so. The reading is still shown,
+    #: with its distance, because a nearby-city reading is worth having as long
+    #: as the reader can see where it came from.
+    waqi_max_station_meters: int = 25_000
+    #: Turn off to drop the air-quality section without disabling every other
+    #: provider.
+    enable_air_quality: bool = True
+
     # --- Geographic features -------------------------------------------------
     overpass_api_url: str = "https://overpass-api.de/api/interpreter"
     #: Mirrors to fall back to, in order, when the main host will not answer.

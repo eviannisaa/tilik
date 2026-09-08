@@ -45,6 +45,7 @@ describe("the guideline source table", () => {
           ["DesInventar", "the archive behind every other hazard"],
           ["Nominatim", "place search"],
           ["Overpass", "nearby places"],
+          ["WAQI", "air quality"],
           ["OpenTopography", "elevation"],
           ["PostGIS", "the local store"],
           ["MapLibre", "the map"],

@@ -8,6 +8,7 @@ from pydantic import Field
 
 from api.schemas.common import AssessmentLevel, CamelModel, ConfidenceLevel, DataSource
 from api.schemas.location import (
+    AirQuality,
     AreaInfo,
     DisasterHistory,
     FloodInfo,
@@ -70,6 +71,7 @@ class LocationReport(CamelModel):
     hazards: HazardIndex
     disasters: DisasterHistory
     news: LocalNews
+    air_quality: AirQuality
     places: NearbyPlaces
     area: AreaInfo
     assessment: Assessment

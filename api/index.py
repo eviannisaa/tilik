@@ -18,10 +18,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.core.config import get_settings
 from api.core.errors import register_exception_handlers
-from api.core.http import close_client
+from api.core.http import close_client, install_log_redaction
 from api.core.ratelimit import RateLimitMiddleware
 from api.db import dispose_engine
 from api.routes import (
+    air_quality,
     disaster,
     elevation,
     hazard,
@@ -33,6 +34,9 @@ from api.routes import (
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+# httpx logs every request URL at INFO, and two providers authenticate by
+# query string. Without this the token is in the log.
+install_log_redaction()
 
 settings = get_settings()
 
@@ -76,5 +80,6 @@ app.include_router(elevation.router, prefix="/api")
 app.include_router(disaster.router, prefix="/api")
 app.include_router(hazard.router, prefix="/api")
 app.include_router(news.router, prefix="/api")
+app.include_router(air_quality.router, prefix="/api")
 app.include_router(places.router, prefix="/api")
 app.include_router(report.router, prefix="/api")

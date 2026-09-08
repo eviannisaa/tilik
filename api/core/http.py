@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from typing import Any
 
 import httpx
@@ -21,6 +22,60 @@ from api.core.errors import (
 )
 
 logger = logging.getLogger("tilik.http")
+
+#: Query parameters that carry a credential, lower-cased.
+#:
+#: Two providers authenticate by query string rather than by header, because
+#: that is the only way they offer: WAQI takes `?token=`, OpenTopography takes
+#: `?API_Key=`. Both are secrets, and both would otherwise be written to a log
+#: line in full. See :class:`RedactSecrets`.
+SECRET_PARAMS = ("token", "api_key", "apikey", "key", "access_token")
+
+#: Matches `name=value` up to the next separator, for any name above.
+#: Built rather than written out so the two lists cannot drift apart.
+_SECRET_PATTERN = re.compile(
+    r"(?i)\b(" + "|".join(SECRET_PARAMS) + r")=[^&\s'\"]+",
+)
+
+
+class RedactSecrets(logging.Filter):
+    """Strip credentials out of log messages before anything writes them.
+
+    `httpx` logs every request at INFO with the full URL, query string
+    included, and `api/index.py` turns INFO on. That is a useful line: it says
+    which host was called and what it answered, which is how a flaky provider
+    gets diagnosed. What it must not also do is publish the credential, and on
+    a serverless host those lines go to durable log storage.
+
+    So the line is kept and the secret is removed, rather than the logger being
+    silenced. Installed on the root handler, so it covers httpx, uvicorn and
+    anything else that formats a URL into a message.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            message = record.getMessage()
+        except Exception:  # noqa: BLE001 - a broken record must not break logging
+            return True
+
+        redacted = _SECRET_PATTERN.sub(r"\1=REDACTED", message)
+        if redacted != message:
+            record.msg = redacted
+            record.args = ()
+        return True
+
+
+def install_log_redaction() -> None:
+    """Attach :class:`RedactSecrets` to every root handler.
+
+    Called once from `api/index.py` after `basicConfig`, which is what creates
+    the handler in the first place.
+    """
+    redactor = RedactSecrets()
+    for handler in logging.getLogger().handlers:
+        if not any(isinstance(existing, RedactSecrets) for existing in handler.filters):
+            handler.addFilter(redactor)
+
 
 _client: httpx.AsyncClient | None = None
 _client_lock = asyncio.Lock()

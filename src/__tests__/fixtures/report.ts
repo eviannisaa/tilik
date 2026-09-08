@@ -104,6 +104,49 @@ export function buildReport(overrides: {
       topics: [],
       note: null,
     },
+    airQuality: {
+      aqi: 78,
+      band: "moderate" as const,
+      level: "low" as const,
+      bandLabel: "Moderate",
+      dominantPollutant: "pm25",
+      dominantLabel: "PM2.5",
+      pollutants: [
+        {
+          key: "pm25",
+          label: "PM2.5",
+          aqi: 78,
+          band: "moderate" as const,
+          bandLabel: "Moderate",
+          level: "low" as const,
+          dominant: true,
+        },
+        {
+          key: "pm10",
+          label: "PM10",
+          aqi: 31,
+          band: "good" as const,
+          bandLabel: "Good",
+          level: "low" as const,
+          dominant: false,
+        },
+      ],
+      // Six on the EPA scale; BMKG's stations mostly report one.
+      pollutantsPossible: 6,
+      stationName: "Kemayoran, Indonesia",
+      stationUrl: "https://aqicn.org/city/example",
+      // Inside the 5 km "measured here" radius, so the fixture exercises the
+      // confident path rather than the far-station warning.
+      stationDistanceMeters: 4200,
+      measuredAt: "2026-01-01T00:00:00Z",
+      attributions: [
+        { name: "World Air Quality Index Project", url: "https://waqi.info/" },
+      ],
+      status: "ok" as const,
+      confidence: "high" as const,
+      description: `Air-quality reading for ${overrides.name}`,
+      note: null,
+    },
     places: { radiusMeters: 1500, total: 0, categories: [], confidence: "low", note: null },
     area: {
       administrativeArea: overrides.area,

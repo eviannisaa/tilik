@@ -23,6 +23,7 @@ from api.schemas.location import (
     LocationInfo,
 )
 from api.schemas.report import LocationReport, ReportMeta
+from api.services import air_quality as air_quality_service
 from api.services import assessment as assessment_service
 from api.services import disasters as disaster_service
 from api.services import elevation as elevation_service
@@ -42,6 +43,7 @@ FRIENDLY_PROVIDER_NAMES = {
     "inarisk": "BNPB InaRISK",
     "opentopography": "OpenTopography",
     "google-news": "the news feed",
+    "waqi": "the air-quality service",
 }
 
 #: Fallback wording when we don't even know which provider was meant to answer.
@@ -54,6 +56,7 @@ FRIENDLY_FIELD_NAMES = {
     "places": "nearby places",
     "hazards": "BNPB hazard indices",
     "news": "local news",
+    "airQuality": "air quality",
 }
 
 
@@ -168,6 +171,7 @@ async def build_report(latitude: float, longitude: float) -> LocationReport:
         hazard_readings,
         places_result,
         news_result,
+        air_quality_result,
     ) = (
         await asyncio.gather(
             geocode_task,
@@ -186,12 +190,14 @@ async def build_report(latitude: float, longitude: float) -> LocationReport:
             ),
             places_service.get_nearby_places(latitude, longitude),
             _news_for_geocode(),
+            air_quality_service.get_air_quality(latitude, longitude),
         )
     )
 
     terrain, terrain_source = terrain_result
     disasters, disaster_sources = disaster_result
     places, places_source = places_result
+    air_quality, air_quality_source = air_quality_result
     hazards = inarisk.build_hazard_index(hazard_readings)
 
     # Flood risk reads both the elevation and BNPB's flood index, so it resolves
@@ -233,6 +239,7 @@ async def build_report(latitude: float, longitude: float) -> LocationReport:
         _hazard_source(hazards),
         *disaster_sources,
         news_source,
+        air_quality_source,
         places_source,
     ]
 
@@ -243,10 +250,11 @@ async def build_report(latitude: float, longitude: float) -> LocationReport:
         hazards=hazards,
         disasters=disasters,
         news=local_news,
+        air_quality=air_quality,
         places=places,
         area=_build_area(latitude, longitude, location, nearby),
         assessment=assessment_service.build_assessment(
-            terrain, flood, disasters, hazards, places
+            terrain, flood, disasters, hazards, places, air_quality
         ),
         meta=ReportMeta(
             generated_at=datetime.now(UTC).isoformat(),

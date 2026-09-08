@@ -285,6 +285,123 @@ class LocalNews(CamelModel):
     note: str | None = None
 
 
+#: US EPA air-quality bands, kept as the six the standard actually defines.
+#:
+#: Not collapsed into :data:`RiskLevel`. The EPA bands are a published scale a
+#: reader can go and check, and "unhealthy for sensitive groups" says something
+#: "medium" cannot: who exactly should be careful. ``level`` carries the
+#: three-way mapping separately, for the palette alone.
+AqiBand = Literal[
+    "good",
+    "moderate",
+    "unhealthySensitive",
+    "unhealthy",
+    "veryUnhealthy",
+    "hazardous",
+    "unknown",
+]
+
+
+class PollutantReading(CamelModel):
+    """One pollutant's sub-index, as WAQI reports it.
+
+    ``aqi`` is already an AQI value, not a concentration: WAQI converts every
+    pollutant onto the same scale before publishing it, so nothing here is in
+    micrograms and nothing needs converting. That also means each row can be
+    banded with exactly the same thresholds as the headline figure.
+    """
+
+    key: str
+    label: str
+    aqi: float
+    band: AqiBand
+    #: The band's published name, e.g. "Unhealthy". Sent rather than derived in
+    #: the UI, so the EPA boundaries and their wording live in one place.
+    band_label: str
+    level: RiskLevel
+    #: True for the pollutant that set the overall AQI (WAQI's ``dominentpol``).
+    dominant: bool = False
+
+
+class AirQualityAttribution(CamelModel):
+    """One body credited for the reading.
+
+    Rendered, not stored for form's sake: WAQI's terms require attribution to
+    the project and to the originating EPA, and the originating EPA is only
+    named here.
+    """
+
+    name: str
+    url: str | None = None
+
+
+class AirQuality(CamelModel):
+    """What the nearest monitoring station is measuring.
+
+    The one instrument reading in this report. Everything else is a model
+    (InaRISK), a catalogue (USGS, NOAA/NCEI) or press coverage. That makes it
+    the strongest number on the page and the one most easily misread, because
+    two things about it are unlike the rest of the report:
+
+    * **It is a station, not this point.** WAQI answers with whichever monitor
+      is nearest and never says how far that is, so
+      :attr:`station_distance_meters` is computed here and drives
+      :attr:`confidence`. A reading from 40 km away is an estimate for a plot of
+      land, not a measurement of it.
+    * **It is right now, not a pattern.** A hazard index describes the ground
+      for as long as the ground lasts. An AQI describes an hour. One clear
+      afternoon says nothing about the dry-season months.
+    """
+
+    aqi: int | None = None
+    band: AqiBand = "unknown"
+    #: The band mapped onto the report's three-way palette. Sent rather than
+    #: re-derived in the UI, so the EPA boundaries live in one place.
+    level: RiskLevel = "unknown"
+    #: The band's published name, e.g. "Unhealthy for sensitive groups".
+    band_label: str | None = None
+    #: WAQI's ``dominentpol`` key, e.g. ``pm25``.
+    dominant_pollutant: str | None = None
+    dominant_label: str | None = None
+    pollutants: list[PollutantReading] = Field(default_factory=list)
+    #: How many pollutants the EPA index is built from, against which
+    #: ``pollutants`` is the count this station actually measures.
+    #:
+    #: Without it the table cannot be read honestly. BMKG's stations mostly
+    #: report PM2.5 and nothing else, so a one-row table looked like a complete
+    #: reading, "PM2.5 sets the index" implied it beat five rivals, and an
+    #: unmeasured pollutant was indistinguishable from an absent one. Five
+    #: pollutants nobody measured is not five pollutants at zero.
+    pollutants_possible: int = 0
+    station_name: str | None = None
+    station_url: str | None = None
+    #: How far the reporting station sits from the checked coordinate.
+    #:
+    #: WAQI does not send this; it is computed from ``data.city.geo``. It is the
+    #: figure that decides what the reading can honestly be said to describe,
+    #: which is why it sets :attr:`confidence` rather than being decoration.
+    station_distance_meters: float | None = None
+    measured_at: str | None = None
+    attributions: list[AirQualityAttribution] = Field(default_factory=list)
+    #: Four failures that mean four different things, which is why they are not
+    #: one flag. ``disabled``: the operator turned the section off.
+    #: ``not_configured``: no WAQI token was set. ``no_station``: WAQI answered
+    #: and has no monitor here. ``unavailable``: WAQI did not answer. Only the
+    #: last two are about the world rather than about this deployment.
+    status: Literal[
+        "ok", "no_station", "unavailable", "not_configured", "disabled"
+    ] = "unavailable"
+    confidence: ConfidenceLevel = "none"
+    description: str
+    note: str | None = None
+
+
+class AirQualityResponse(CamelModel):
+    latitude: float
+    longitude: float
+    air_quality: AirQuality
+
+
 class AreaFeature(CamelModel):
     name: str
     kind: str

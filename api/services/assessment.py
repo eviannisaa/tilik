@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from api.schemas.common import AssessmentLevel, ConfidenceLevel
 from api.schemas.location import (
+    AirQuality,
     DisasterHistory,
     FloodInfo,
     HazardIndex,
@@ -455,6 +456,52 @@ def _access_factor(places: NearbyPlaces) -> tuple[int, AssessmentFactor | None]:
     )
 
 
+def _air_quality_factor(air: AirQuality) -> tuple[int, AssessmentFactor | None]:
+    """Air quality. Always scores zero, and that is the whole point of it.
+
+    The score stays zero for two reasons, both worth stating because the next
+    person to read this will want to change it.
+
+    The verdict is a statement about *land*. Flood hazard, terrain and seismic
+    history are properties of the ground that will still be true next decade.
+    An AQI is one hour at one station: AQI 180 over Jakarta on an August
+    afternoon is weather and traffic, not a property of the parcel, and it will
+    read 60 after a week of rain. Scoring it would make the verdict change
+    between two checks of the same plot while nothing about the plot changed.
+
+    And it is measured somewhere else. WAQI answers with the nearest monitor,
+    which may be 30 km away and on the other side of a city, so the reading that
+    would be moving the verdict is often not a reading of this place at all.
+
+    The factor is still shown, because a reader deciding where to live should
+    see it. It just does not pretend to be a fact about the soil.
+    """
+    if air.status != "ok" or air.aqi is None or not air.band_label:
+        return 0, None
+
+    if air.band in ("unhealthy", "veryUnhealthy", "hazardous"):
+        impact = "negative"
+    elif air.band == "good":
+        impact = "positive"
+    else:
+        impact = "neutral"
+
+    where = ""
+    if air.station_distance_meters is not None:
+        where = f", measured {air.station_distance_meters / 1000:.0f} km away"
+
+    driver = f" {air.dominant_label} is driving it." if air.dominant_label else ""
+
+    return 0, AssessmentFactor(
+        label=f"Air quality {air.band_label.lower()}",
+        detail=(
+            f"AQI {air.aqi} on the US EPA scale{where}.{driver} This is one hour's "
+            "reading rather than a pattern, so it does not move the verdict."
+        ),
+        impact=impact,  # type: ignore[arg-type]
+    )
+
+
 def _overall_confidence(*levels: ConfidenceLevel) -> ConfidenceLevel:
     ranking = {"none": 0, "low": 1, "medium": 2, "high": 3}
     scores = [ranking[level] for level in levels]
@@ -477,6 +524,7 @@ def build_assessment(
     disasters: DisasterHistory,
     hazards: HazardIndex,
     places: NearbyPlaces,
+    air_quality: AirQuality,
 ) -> Assessment:
     """Fold every section into one coarse, explainable verdict."""
     flood_score, flood_factor = _flood_factor(flood)
@@ -485,6 +533,7 @@ def build_assessment(
     tsunami_score, tsunami_factor = _tsunami_factor(disasters)
     hazard_score, hazard_factor = _hazard_factor(hazards)
     _, access_factor = _access_factor(places)
+    _, air_factor = _air_quality_factor(air_quality)
 
     factors = [
         factor
@@ -495,6 +544,7 @@ def build_assessment(
             disaster_factor,
             tsunami_factor,
             access_factor,
+            air_factor,
         )
         if factor
     ]
